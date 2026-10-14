@@ -1,0 +1,112 @@
+// Os campos marcados com "// enum:" sao Strings no banco, validadas pelo Zod.
+//   ItemCategory   -> ELETRONICO | DOCUMENTO | ROUPA_ACESSORIO | CHAVE | LIVRO_MATERIAL | BOLSA_MOCHILA | OUTRO
+//   LostItemStatus -> PENDING_MATCH | MATCHED | RESOLVED
+//   FoundItemStatus-> AVAILABLE | MATCHED | RESOLVED
+//   MatchStatus    -> SUGGESTED | VERIFIED | BLOCKED | RESOLVED
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // directUrl: conexao sem pooler, exigida pelas migracoes.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String
+  password  String
+  createdAt DateTime @default(now())
+
+  lostItems  LostItem[]
+  foundItems FoundItem[]
+
+  @@map("users")
+}
+
+model LostItem {
+  id          String   @id @default(cuid())
+  category    String // enum: ItemCategory
+  color       String
+  location    String
+  lostDate    DateTime
+  description String
+  photoUrl    String?
+  status      String   @default("PENDING_MATCH") // enum: LostItemStatus
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  matches Match[]
+
+  @@map("lost_items")
+}
+
+model FoundItem {
+  id           String   @id @default(cuid())
+  category     String // enum: ItemCategory
+  color        String
+  location     String
+  foundDate    DateTime
+  description  String
+  photoUrl     String?
+  // Para fotos que exponham dados de terceiros (carteira, documento).
+  photoBlurred Boolean  @default(false)
+
+  // NUNCA retornar em endpoints publicos. A pergunta aparece para quem tenta
+  // verificar; a resposta fica sempre oculta.
+  secretQuestion String
+  secretAnswer   String
+
+  status    String   @default("AVAILABLE") // enum: FoundItemStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  matches Match[]
+
+  @@map("found_items")
+}
+
+model Match {
+  id     String @id @default(cuid())
+  score  Int
+  status String @default("SUGGESTED") // enum: MatchStatus
+
+  lostItemId String
+  lostItem   LostItem @relation(fields: [lostItemId], references: [id], onDelete: Cascade)
+
+  foundItemId String
+  foundItem   FoundItem @relation(fields: [foundItemId], references: [id], onDelete: Cascade)
+
+  attempts VerificationAttempt[]
+
+  lostConfirmedDelivery  Boolean @default(false)
+  foundConfirmedDelivery Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([lostItemId, foundItemId])
+  @@map("matches")
+}
+
+model VerificationAttempt {
+  id        String   @id @default(cuid())
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  matchId String
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@map("verification_attempts")
+}
