@@ -31,7 +31,6 @@ npm-debug.log*
 # editor / os / ferramentas
 .vscode/*
 !.vscode/extensions.json
-.claude/
 .DS_Store
 Thumbs.db
 
