@@ -46,7 +46,7 @@ export default function RegisterPage() {
         <input className="input" required value={form.name} onChange={(e) => update("name", e.target.value)} />
       </div>
       <div>
-        <label className="label">E-mail institucional</label>
+        <label className="label">E-mail</label>
         <input
           className="input"
           type="email"

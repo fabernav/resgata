@@ -5,6 +5,8 @@ import { getSession } from "@/lib/auth";
 import { CATEGORY_LABELS } from "@/lib/categories";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
+import { ItemActions } from "@/components/ItemActions";
+import { motivoDeTrava } from "@/lib/item-management";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -14,10 +16,12 @@ export default async function DashboardPage() {
 
     prisma.lostItem.findMany({
       where: { userId: session.userId, status: { not: "RESOLVED" } },
+      include: { matches: { select: { status: true } } }, // para saber se pode editar/excluir
       orderBy: { createdAt: "desc" },
     }),
     prisma.foundItem.findMany({
       where: { userId: session.userId, status: { not: "RESOLVED" } },
+      include: { matches: { select: { status: true } } }, // para saber se pode editar/excluir
       orderBy: { createdAt: "desc" },
     }),
     prisma.match.findMany({
@@ -134,6 +138,7 @@ export default async function DashboardPage() {
                   <MapPin className="h-3.5 w-3.5" />
                   {item.location}
                 </p>
+                {!motivoDeTrava(item) && <ItemActions tipo="lost" id={item.id} />}
               </div>
             ))}
           </div>
@@ -166,6 +171,7 @@ export default async function DashboardPage() {
                   <MapPin className="h-3.5 w-3.5" />
                   {item.location}
                 </p>
+                {!motivoDeTrava(item) && <ItemActions tipo="found" id={item.id} />}
               </div>
             ))}
           </div>
