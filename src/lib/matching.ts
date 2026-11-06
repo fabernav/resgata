@@ -17,7 +17,7 @@ const PESOS = {
 // Folga para "achado antes de perdido": as pessoas erram a data em que perderam algo.
 const FOLGA_DATA_DIAS = 3;
 
-function getMinScore(): number {
+export function getMinScore(): number {
   const raw = process.env.MATCH_MIN_SCORE;
   const parsed = raw ? Number(raw) : NaN;
   return Number.isFinite(parsed) ? parsed : 50;

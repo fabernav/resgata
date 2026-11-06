@@ -25,18 +25,29 @@ const telefoneSchema = z.string().superRefine((valor, ctx) => {
   if (erro) ctx.addIssue({ code: z.ZodIssueCode.custom, message: erro });
 });
 
+// Aceita qualquer e-mail. trim + minusculas para "Joao@Gmail.com " e
+// "joao@gmail.com" serem a mesma conta no cadastro, no login e no reset.
+const emailSchema = z.string().trim().toLowerCase().email("E-mail invalido");
+
 export const registerSchema = z.object({
   name: z.string().min(2, "Nome muito curto"),
-  email: z.string().email("E-mail invalido").refine((email) => email.includes("."), {
-    message: "Use seu e-mail institucional",
-  }),
+  email: emailSchema,
   phone: telefoneSchema,
   password: senhaSchema,
 });
 
 export const loginSchema = z.object({
-  email: z.string().email("E-mail invalido"),
+  email: emailSchema,
   password: z.string().min(1, "Senha obrigatoria"),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(10, "Link invalido"),
+  password: senhaSchema,
 });
 
 // O navegador ja comprime a foto, mas a API pode ser chamada direto.

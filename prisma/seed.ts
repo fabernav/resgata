@@ -19,6 +19,7 @@ async function main() {
   await prisma.lostItem.deleteMany();
   await prisma.foundItem.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.loginThrottle.deleteMany();
 
   const senha = await bcrypt.hash(SENHA_DEMO, 10);
   const criarUsuario = (name: string, email: string, phone: string) =>

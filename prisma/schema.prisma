@@ -23,10 +23,39 @@ model User {
   password  String
   createdAt DateTime @default(now())
 
-  lostItems  LostItem[]
-  foundItems FoundItem[]
+  lostItems   LostItem[]
+  foundItems  FoundItem[]
+  resetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+// Protecao do login contra forca bruta: conta as senhas erradas por e-mail e,
+// ao passar do limite, trava o login daquele e-mail por 1 minuto.
+// Fica no banco (e nao na memoria) porque na Vercel cada acesso pode cair em
+// um servidor diferente.
+model LoginThrottle {
+  email       String    @id
+  failures    Int       @default(0)
+  lockedUntil DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@map("login_throttles")
+}
+
+// "Esqueci minha senha". Guarda so o HASH do token: quem ler o banco nao
+// consegue usar o link enviado por e-mail.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model LostItem {

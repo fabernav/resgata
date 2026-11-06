@@ -7,7 +7,8 @@ async function main() {
   const matches = await prisma.match.deleteMany();
   const perdidos = await prisma.lostItem.deleteMany();
   const achados = await prisma.foundItem.deleteMany();
-  const usuarios = await prisma.user.deleteMany();
+  const usuarios = await prisma.user.deleteMany(); // apaga os tokens de "esqueci a senha" junto
+  const bloqueios = await prisma.loginThrottle.deleteMany();
 
   console.log("Banco limpo:");
   console.log(`  ${usuarios.count} contas removidas`);
@@ -15,6 +16,7 @@ async function main() {
   console.log(`  ${achados.count} itens achados removidos`);
   console.log(`  ${matches.count} matches removidos`);
   console.log(`  ${tentativas.count} tentativas de verificacao removidas`);
+  console.log(`  ${bloqueios.count} contadores de bloqueio de login removidos`);
   console.log("");
   console.log("O banco esta vazio. Cadastre as contas do zero para testar.");
   console.log("Para voltar ao cenario de demonstracao: npm run db:seed");
