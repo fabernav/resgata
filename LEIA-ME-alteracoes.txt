@@ -1,0 +1,38 @@
+Arquivos criados ou alterados em 05/11/2026 (projeto Resgata)
+Cada arquivo esta no mesmo caminho que ocupa dentro da pasta PI-IMT.
+O .env nao foi incluido porque tem senhas.
+
+NOVOS (16):
+  prisma/migrations/20261105222730_login_throttle_e_reset_senha/migration.sql
+  src/lib/login-throttle.ts
+  src/lib/password-reset.ts
+  src/lib/email.ts
+  src/lib/item-management.ts
+  src/app/api/auth/forgot-password/route.ts
+  src/app/api/auth/reset-password/route.ts
+  src/app/api/lost-items/[id]/route.ts
+  src/app/api/found-items/[id]/route.ts
+  src/app/(auth)/forgot-password/page.tsx
+  src/app/(auth)/reset-password/page.tsx
+  src/app/(dashboard)/items/lost/[id]/edit/page.tsx
+  src/app/(dashboard)/items/found/[id]/edit/page.tsx
+  src/components/LostItemForm.tsx
+  src/components/FoundItemForm.tsx
+  src/components/ItemActions.tsx
+
+ALTERADOS (15):
+  prisma/schema.prisma
+  prisma/clean.ts
+  prisma/seed.ts
+  src/lib/validators.ts
+  src/lib/api-client.ts
+  src/lib/matching.ts
+  src/app/api/auth/login/route.ts
+  src/app/(auth)/login/page.tsx
+  src/app/(auth)/register/page.tsx
+  src/app/(dashboard)/dashboard/page.tsx
+  src/app/(dashboard)/items/lost/new/page.tsx
+  src/app/(dashboard)/items/found/new/page.tsx
+  package.json
+  package-lock.json
+  .env.example
