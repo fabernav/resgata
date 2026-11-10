@@ -1,0 +1,141 @@
+// Os campos marcados com "// enum:" sao Strings no banco, validadas pelo Zod.
+//   ItemCategory   -> ELETRONICO | DOCUMENTO | ROUPA_ACESSORIO | CHAVE | LIVRO_MATERIAL | BOLSA_MOCHILA | OUTRO
+//   LostItemStatus -> PENDING_MATCH | MATCHED | RESOLVED
+//   FoundItemStatus-> AVAILABLE | MATCHED | RESOLVED
+//   MatchStatus    -> SUGGESTED | VERIFIED | BLOCKED | RESOLVED
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // directUrl: conexao sem pooler, exigida pelas migracoes.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String
+  password  String
+  createdAt DateTime @default(now())
+
+  lostItems   LostItem[]
+  foundItems  FoundItem[]
+  resetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+// Protecao do login contra forca bruta: conta as senhas erradas por e-mail e,
+// ao passar do limite, trava o login daquele e-mail por 1 minuto.
+// Fica no banco (e nao na memoria) porque na Vercel cada acesso pode cair em
+// um servidor diferente.
+model LoginThrottle {
+  email       String    @id
+  failures    Int       @default(0)
+  lockedUntil DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@map("login_throttles")
+}
+
+// "Esqueci minha senha". Guarda so o HASH do token: quem ler o banco nao
+// consegue usar o link enviado por e-mail.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model LostItem {
+  id          String   @id @default(cuid())
+  category    String // enum: ItemCategory
+  color       String
+  location    String
+  lostDate    DateTime
+  description String
+  photoUrl    String?
+  status      String   @default("PENDING_MATCH") // enum: LostItemStatus
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  matches Match[]
+
+  @@map("lost_items")
+}
+
+model FoundItem {
+  id           String   @id @default(cuid())
+  category     String // enum: ItemCategory
+  color        String
+  location     String
+  foundDate    DateTime
+  description  String
+  photoUrl     String?
+  // Para fotos que exponham dados de terceiros (carteira, documento).
+  photoBlurred Boolean  @default(false)
+
+  // NUNCA retornar em endpoints publicos. A pergunta aparece para quem tenta
+  // verificar; a resposta fica sempre oculta.
+  secretQuestion String
+  secretAnswer   String
+
+  status    String   @default("AVAILABLE") // enum: FoundItemStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  matches Match[]
+
+  @@map("found_items")
+}
+
+model Match {
+  id     String @id @default(cuid())
+  score  Int
+  status String @default("SUGGESTED") // enum: MatchStatus
+
+  lostItemId String
+  lostItem   LostItem @relation(fields: [lostItemId], references: [id], onDelete: Cascade)
+
+  foundItemId String
+  foundItem   FoundItem @relation(fields: [foundItemId], references: [id], onDelete: Cascade)
+
+  attempts VerificationAttempt[]
+
+  lostConfirmedDelivery  Boolean @default(false)
+  foundConfirmedDelivery Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([lostItemId, foundItemId])
+  @@map("matches")
+}
+
+model VerificationAttempt {
+  id        String   @id @default(cuid())
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  matchId String
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@map("verification_attempts")
+}
